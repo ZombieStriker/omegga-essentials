@@ -3,26 +3,6 @@
   "description": "All the essentials for starting a server.",
   "author": "Zombie_Striker",
   "config": {
-    "decimalplaces": {
-      "description": "The number of decimal places for the currency to support.",
-      "type": "number",
-      "default": 2
-    },
-    "prefix": {
-      "description": "The prefix for currency.",
-      "type": "string",
-      "default": "$"
-    },
-    "suffix": {
-      "description": "The suffix for currency.",
-      "type": "string",
-      "default": ""
-    },
-    "startingamount": {
-      "description": "The starting amount of currency for new players.",
-      "type": "number",
-      "default": 0
-    },
     "admins": {
       "description": "Players that can use the admin commands.",
       "type": "list",
@@ -37,7 +17,7 @@
     "whitelist": {
       "description": "Players that can join the server.",
       "type": "list",
-      "itemType": "string",
+      "itemType": "players",
       "default": []
     }
   },

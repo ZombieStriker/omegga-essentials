@@ -6,8 +6,6 @@ import { OmeggaPlayer, Brick } from './omegga';
 type Config = { decimalplaces: number; prefix:string; suffix:string; startingamount: number; admins:string[], enablewhitelist: boolean, whitelist: string[]};
 type Storage = { [id: string]: any};
 
-let economy = [];
-
 export default class Plugin implements OmeggaPlugin<Config, Storage> {
   omegga: OL;
   config: PC<Config>;
@@ -21,47 +19,7 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
 
   async init() {
     //Heal commands
-    this.omegga.on('cmd:heal', (speaker: string) => {
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      this.omegga.getPlayer(speaker).heal(2500);
-    });
-    this.omegga.on('cmd:heal', (speaker: string, who: string) => {
-      if(who===undefined)
-        return;
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      if(who==="@a"){
-        for(let player in this.omegga.getPlayers()){
-          this.omegga.getPlayer(this.omegga.getPlayers()[player].name).damage(25);
-        }
-      }else{
-      this.omegga.getPlayer(who).heal(2500);
-      }
-    });
     this.omegga.on('cmd:heal', (speaker: string, who:string,amount:string) => {
-      if(who===undefined||amount ===undefined)
-        return;
       let isadmin = false;
       for(let admin in this.config.admins){
         if(this.config.admins[admin]===speaker){
@@ -79,51 +37,17 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
           this.omegga.getPlayer(this.omegga.getPlayers()[player].name).damage(Number.parseInt(amount));
         }
       }else{
-      this.omegga.getPlayer(who).heal(Number.parseInt(amount));
+        let a = Number.parseInt(amount);
+        let b = who;
+        if(a === undefined)
+        a=25;
+        if(b===undefined)
+        who=speaker;
+      this.omegga.getPlayer(b).heal(a);
       }
     });
     //Hurt commands
-    this.omegga.on('cmd:hurt', (speaker: string) => {
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      this.omegga.getPlayer(speaker).damage(25);
-    });
-    this.omegga.on('cmd:hurt', (speaker: string, who: string) => {
-      if(who===undefined)
-        return;
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      if(who==="@a"){
-        for(let player in this.omegga.getPlayers()){
-          this.omegga.getPlayer(this.omegga.getPlayers()[player].name).damage(25);
-        }
-      }else{
-      this.omegga.getPlayer(who).damage(25);
-      }
-    });
     this.omegga.on('cmd:hurt', (speaker: string, who:string,amount:string) => {
-      if(who===undefined||amount ===undefined)
-        return;
       let isadmin = false;
       for(let admin in this.config.admins){
         if(this.config.admins[admin]===speaker){
@@ -141,7 +65,12 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
           this.omegga.getPlayer(this.omegga.getPlayers()[player].name).damage(Number.parseInt(amount));
         }
       }else{
-      this.omegga.getPlayer(who).damage(Number.parseInt(amount));
+        let a = Number.parseInt(amount);
+        let b = who;
+        if(a === undefined)
+        a=25;
+        if(b===undefined)
+      this.omegga.getPlayer(b).damage(a);
       }
     });
 
@@ -168,7 +97,10 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
           this.omegga.getPlayer(player).kill();
         }
       }else{
-      this.omegga.getPlayer(who).kill();
+        let a = who;
+        if(a === undefined)
+        a = speaker;
+      this.omegga.getPlayer(a).kill();
       }
     });
 
@@ -240,97 +172,7 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
       this.omegga.whisper(speaker,"Your position is <color=\"FF0000\">X="+position[0]+"</>, "+"<color=\"00A0FF\">Y="+position[1]+"</>, "+"<color=\"FFFF00\">Z="+position[2]+"</>"+".");
     });
     
-    //Money commands
-    this.omegga.on('cmd:bal', (speaker: string, who: string) => {
-      if(who===undefined){
-        let a = economy[speaker];
-        if(a === undefined)
-          a=0;
-        this.omegga.whisper(speaker,"You have <color=\"ffff00\">"+this.config.prefix+a+this.config.suffix+"</>.");
-        return;
-      }
-      let a = economy[who];
-      if(a === undefined)
-        a=0;
-      this.omegga.whisper(speaker,who+" has <color=\"ffff00\">"+this.config.prefix+a+this.config.suffix+"</>.");
-    });
-
-    this.omegga.on('cmd:pay', (speaker: string, who:string,amount:string) => {
-      if(who===undefined||amount===undefined){
-        this.omegga.whisper(speaker,"Usage: /pay {player} {amount}");
-        return;
-      }
-      let num = Number.parseInt(amount);
-      num = Number.parseInt(num.toFixed(this.config.decimalplaces));
-      if(num <= 0){
-        this.omegga.whisper(speaker, "You cannot pay non-real amounts.");
-        return;
-      }
-      if(economy[speaker] < num){
-        this.omegga.whisper(speaker, "You do not have enough to pay "+who+".");
-        return;
-      }
-      economy[speaker]=economy[speaker]-num;
-      economy[who]=economy[who]-num;
-
-      this.omegga.whisper(speaker,"You have given <color=\"ffff00\">"+this.config.prefix+num+this.config.suffix+"</> to "+who+".");
-      this.omegga.whisper(speaker,"You have recieved <color=\"ffff00\">"+this.config.prefix+num+this.config.suffix+"</> from "+speaker+".");
-    });
-    
     //Admin Commands ==============================================================
-    
-    
-    this.omegga.on('cmd:givemoney', (speaker: string, who:string,amount:string) => {
-      if(who===undefined||amount===undefined){
-        this.omegga.whisper(speaker,"Usage: /givemoney {player} {amount}");
-        return;
-    }
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      let num = Number.parseInt(amount);
-      num = Number.parseInt(num.toFixed(this.config.decimalplaces));
-      economy[who]=economy[who]+num;
-      this.omegga.whisper(speaker,"You admin-gave <color=\"ffff00\">"+this.config.prefix+num+this.config.suffix+"</> to "+who+".");
-    });
-    
-    
-    this.omegga.on('cmd:setmoney', (speaker: string, who:string,amount:string) => {
-      if(who===undefined||amount===undefined){
-        this.omegga.whisper(speaker,"Usage: /setmoney {player} {amount}");
-        return;
-      }
-      let isadmin = false;
-      for(let admin in this.config.admins){
-        if(this.config.admins[admin]===speaker){
-          isadmin = true;
-          break;
-        }
-      }
-
-      if(!isadmin){
-        this.omegga.whisper(speaker,"You do not have permission to use this command");
-        return;
-      }
-      let num = Number.parseInt(amount);
-      num = Number.parseInt(num.toFixed(this.config.decimalplaces));
-      economy[who]=num;
-      this.omegga.whisper(speaker,"You admin-gave <color=\"ffff00\">"+this.config.prefix+num+this.config.suffix+"</> to "+who+".");
-    });
-
-
-
-
-
 
     this.omegga.on('interact',async ({message,player}) =>{
       if(message.startsWith('/tp ')){
@@ -352,7 +194,8 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
 
     this.omegga.on('join',async (player: OmeggaPlayer) =>{
 
-      if(this.config.whitelist){
+      if(this.config.enablewhitelist){
+        if(!player.isHost){
         let allowed = false;
         for(let a in this.config.whitelist){
           if(player.name === this.config.whitelist[a]){
@@ -367,70 +210,21 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
         }
       }
 
-
-
-
-
-      if(!economy[player.name]){
-        economy[player.name] = await this.store.get("econ."+player.name) ?? this.config.startingamount;
-        console.log("Setting player bank to "+economy[player.name]+" for "+player.name+".");
-      }
       let jointext = fs.readFileSync(path.join(__dirname,"../jointext.txt"));
       let jointextarray = jointext.toLocaleString().split("/\r?\n/");
       for(let s in jointextarray){
-        this.omegga.whisper(player.name,jointextarray[s]);
-      }
-    });
-
-    for(let playerindex in this.omegga.getPlayers()){
-      let player = this.omegga.getPlayers()[playerindex];
-      if(!economy[player.name]){
-        economy[player.name] = await this.store.get("econ."+player.name) ?? this.config.startingamount;
-        console.log("Setting player bank to "+economy[player.name]+" for "+player.name+".");
+        this.omegga.whisper(player.name,jointextarray[s]); 
       }
     }
+    });
 
 
 
     return { registeredCommands: ['hurt','kill','middleprint','whisper','chat','bal','pay','givemoney','setmoney','heal','getpos'] };
   }
   async stop() {
-    console.log("Saving economy...");
-    for(let a in economy){
-      this.store.set("econ."+a,economy[a]);
-    }
-  }
-
-  async pluginEvent(event: string, from: string, ...args: any[]): Promise<unknown> {
-      if(event === "withdraw"){
-        if(!economy[args[0]]){
-          economy[args[0]] = await this.store.get("econ."+args[0]) ?? this.config.startingamount;
-          console.log("Setting player bank to "+economy[args[0]]+" for "+args[0]+".");
-        }
-        economy[args[0]]-=args[1];
-        console.log("withdrawing "+args[1]+" from "+args[0]);
-        return economy[args[0]];
-      }else if(event === "deposit"){
-        if(!economy[args[0]]){
-          economy[args[0]] = await this.store.get("econ."+args[0]) ?? this.config.startingamount;
-          console.log("Setting player bank to "+economy[args[0]]+" for "+args[0]+".");
-        }
-        economy[args[0]]+=args[1];
-        console.log("depositing "+args[1]+" to "+args[0]);
-        return economy[args[0]];
-      }else if(event === "bank"){
-        if(!economy[args[0]]){
-          economy[args[0]] = await this.store.get("econ."+args[0]) ?? this.config.startingamount;
-          console.log("Setting player bank to "+economy[args[0]]+" for "+args[0]+".");
-        }
-        return economy[args[0]];
-      }
-      return null;
   }
 }
-
-
-
 
 function sanitize(args: string[]){
   let s: string = "";
