@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { OmeggaPlayer, Brick } from './omegga';
 
-type Config = { decimalplaces: number; prefix:string; suffix:string; startingamount: number; admins:string[], enablewhitelist: boolean, whitelist: string[]};
+type Config = {admins:string[], enablewhitelist: boolean, whitelist: OmeggaPlayer[]};
 type Storage = { [id: string]: any};
 
 export default class Plugin implements OmeggaPlugin<Config, Storage> {
@@ -195,10 +195,10 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
     this.omegga.on('join',async (player: OmeggaPlayer) =>{
 
       if(this.config.enablewhitelist){
-        if(!player.isHost){
+        if(!player.isHost()){
         let allowed = false;
         for(let a in this.config.whitelist){
-          if(player.name === this.config.whitelist[a]){
+          if(player.id === this.config.whitelist[a].id){
             allowed = true;
             break;
           }
@@ -220,7 +220,7 @@ export default class Plugin implements OmeggaPlugin<Config, Storage> {
 
 
 
-    return { registeredCommands: ['hurt','kill','middleprint','whisper','chat','bal','pay','givemoney','setmoney','heal','getpos'] };
+    return { registeredCommands: ['hurt','kill','middleprint','whisper','chat','heal','getpos'] };
   }
   async stop() {
   }

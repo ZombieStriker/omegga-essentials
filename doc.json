@@ -16,8 +16,7 @@
     },
     "whitelist": {
       "description": "Players that can join the server.",
-      "type": "list",
-      "itemType": "players",
+      "type": "players",
       "default": []
     }
   },
